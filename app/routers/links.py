@@ -32,7 +32,7 @@ def _reject_self_reference(url: str) -> None:
     own_host = urlparse(settings.base_url).hostname
     if target_host and own_host and target_host.lower() == own_host.lower():
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Cannot shorten a URL pointing to this service (redirect loop)",
         )
 
