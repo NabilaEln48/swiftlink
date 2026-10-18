@@ -17,7 +17,12 @@ class ShortenRequest(BaseModel):
     url: HttpUrl
 
     # Optional vanity code, e.g. alias="promo" -> /promo.
-    alias: str | None = Field(default=None, min_length=3, max_length=32)
+    # Charset is restricted: an alias containing "/" would break routing
+    # (FastAPI would parse it as extra path segments), and characters like
+    # "?" or "#" would corrupt the URL. Letters, digits, "-" and "_" only.
+    alias: str | None = Field(
+        default=None, min_length=3, max_length=32, pattern=r"^[A-Za-z0-9_-]+$"
+    )
 
     # Optional lifetime in seconds. None = never expires.
     expires_in_seconds: int | None = Field(default=None, gt=0)
