@@ -1,0 +1,37 @@
+# Continuous Integration: runs on every push and pull request.
+#
+# What it does, in order:
+#   1. Checks out the code on a fresh Ubuntu runner.
+#   2. Installs Python 3.12 and the project (with dev extras for pytest).
+#   3. Runs the test suite.
+#
+# Why no Redis service here? The tests use fakeredis (see tests/conftest.py),
+# an in-memory fake — so CI needs no Redis server at all. Faster, cheaper,
+# one less flake source.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest -q
