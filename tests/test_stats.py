@@ -1,6 +1,3 @@
-"""Tests for GET /{code}/stats."""
-
-
 def test_stats_reflects_link_data(client, no_rate_limit):
     code = client.post(
         "/shorten", json={"url": "https://example.com/x"}
@@ -14,8 +11,7 @@ def test_stats_reflects_link_data(client, no_rate_limit):
     assert body["code"] == code
     assert body["original_url"] == "https://example.com/x"
     assert body["clicks"] == 2
-    assert body["created_at"]  # ISO timestamp present
-
+    assert body["created_at"]
 
 def test_stats_unknown_code_404(client, no_rate_limit):
     assert client.get("/ghost/stats").status_code == 404
