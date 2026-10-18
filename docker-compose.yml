@@ -1,0 +1,14 @@
+# Local Redis for development. The app only needs REDIS_URL pointing here.
+# Start it with: docker compose up -d
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    # Persist to disk so shortened links survive a container restart.
+    command: redis-server --appendonly yes
+
+volumes:
+  redis-data:
