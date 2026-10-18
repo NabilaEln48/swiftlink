@@ -103,6 +103,14 @@ def link_stats(code: str):
     )
 
 
+@router.get("/leaderboard")
+def leaderboard(limit: int = 10):
+    """Top short links by clicks. Registered BEFORE /{code}: otherwise the
+    literal path "leaderboard" would be captured as a code and 404."""
+    entries = store.top_links(get_redis(), limit=max(1, min(limit, 100)))
+    return {"top": [{"code": code, "clicks": clicks} for code, clicks in entries]}
+
+
 @router.get("/{code}")
 def redirect_link(code: str):
     """Resolve a short code to its target with an HTTP 307 redirect.
@@ -121,4 +129,14 @@ def redirect_link(code: str):
         # The distinction helps clients and is good HTTP hygiene.
         raise HTTPException(status_code=410, detail="Short link has expired")
     store.record_click(r, code)
+    store.record_leaderboard_hit(r, code)
     return RedirectResponse(url=link["url"], status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+
+@router.delete("/{code}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_link(code: str):
+    """Retire a short link. Idempotent from the client's view: missing
+    codes 404 rather than silently succeeding, so callers know the state."""
+    if not store.delete_link(get_redis(), code):
+        raise HTTPException(status_code=404, detail="Short link not found")
+    return None

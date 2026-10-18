@@ -80,3 +80,36 @@ def is_expired(link: dict) -> bool:
     if not expires_at:
         return False
     return datetime.fromisoformat(expires_at) <= datetime.now(timezone.utc)
+
+
+LEADERBOARD_KEY = "swiftlink:leaderboard"
+
+
+def record_leaderboard_hit(r: redis.Redis, code: str) -> None:
+    """Bump the code's score in the global click leaderboard.
+
+    Why a sorted set? ZINCRBY + ZREVRANGE gives us a ranked "top links"
+    list in O(log n) per hit and O(limit) per read — no scanning, no
+    sorting in Python. This is the canonical Redis leaderboard pattern.
+    """
+    r.zincrby(LEADERBOARD_KEY, 1, code)
+
+
+def top_links(r: redis.Redis, limit: int = 10) -> list[tuple[str, int]]:
+    """Return [(code, clicks), ...] ordered by clicks descending."""
+    return [
+        (code, int(score))
+        for code, score in r.zrevrange(LEADERBOARD_KEY, 0, limit - 1, withscores=True)
+    ]
+
+
+def delete_link(r: redis.Redis, code: str) -> bool:
+    """Delete a link and drop it from the leaderboard. False if missing."""
+    key = _key(code)
+    if not r.exists(key):
+        return False
+    pipe = r.pipeline()
+    pipe.delete(key)
+    pipe.zrem(LEADERBOARD_KEY, code)
+    pipe.execute()
+    return True
