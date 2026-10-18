@@ -24,6 +24,8 @@ Open http://localhost:8000/docs for the interactive API docs.
 | POST   | `/shorten`       | Create a short link (rate-limited: 10/min per IP)   |
 | GET    | `/{code}`        | 307 redirect to the original URL, counts a click   |
 | GET    | `/{code}/stats`  | Click analytics for a link                         |
+| DELETE | `/{code}`        | Retire a short link                                |
+| GET    | `/leaderboard`   | Top links by clicks (Redis sorted set)             |
 | GET    | `/health`        | Liveness probe                                      |
 
 **Create a link:**
